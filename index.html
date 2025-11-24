@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Modelo de Caja CSS</title>
+    <style>
+        /* === ESTILOS GLOBALES (DARK MODE POR DEFECTO) === */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .slideshow-container { position: relative; width: 90%; max-width: 960px; }
+        
+        .slide {
+            display: none;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            height: 600px; 
+            padding: 40px 60px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            flex-direction: column; justify-content: center; position: relative;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .fade { animation-name: fade; animation-duration: 0.5s; }
+        @keyframes fade { from {opacity: .4} to {opacity: 1} }
+
+        .prev, .next {
+            cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%);
+            width: 50px; height: 50px; background-color: #333; color: #f1f1f1;
+            border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 24px; transition: all 0.3s ease;
+            user-select: none; z-index: 10;
+        }
+        .prev:hover, .next:hover { background-color: #555; }
+        .prev { left: -70px; }
+        .next { right: -70px; }
+
+        /* === COLOR DE ACENTO: AZUL CLARO (#4fc3f7) === */
+        .slide h1 { 
+            font-size: 3.5em; 
+            text-align: center; 
+            border-bottom: 4px solid #4fc3f7; 
+            padding-bottom: 20px; 
+            color: #4fc3f7; 
+        }
+        .slide h2 { 
+            font-size: 2.6em; 
+            margin: 0 0 30px; 
+            text-align: center; 
+            color: #4fc3f7; 
+        }
+        
+        .single-content p { font-size: 1.3em; color: #cccccc; text-align: center; margin-bottom: 20px; line-height: 1.6; }
+        
+        /* Estilos de código con Syntax Highlighting */
+        pre { width: 90%; max-width: 750px; margin: 0 auto; background-color: #263238; color: #eceff1; padding: 20px; border-radius: 8px; font-size: 1.1em; white-space: pre-wrap; border: 1px solid #37474f; text-align: left; box-shadow: inset 0 2px 5px rgba(0,0,0,0.3); }
+        
+        code { font-family: 'Consolas', 'Monaco', monospace; color: #80cbc4; }
+        .comment { color: #78909c; font-style: italic; }
+        .prop { color: #c792ea; } /* Lila */
+        .val { color: #c3e88d; }  /* Verde claro */
+        .sel { color: #ffcb6b; }  /* Amarillo */
+        .unit { color: #f78c6c; } /* Naranja para unidades px/em */
+
+        .footer { position: absolute; bottom: 20px; right: 40px; font-size: 1em; color: #888; }
+        .subtitle { color: #b0bec5; font-size: 1.8em; font-weight: 300; margin: 0 0 30px; text-align: center; letter-spacing: 1px; }
+        
+        /* === SWITCH TEMA === */
+        .theme-switch-wrapper { position: fixed; top: 15px; right: 15px; z-index: 100; }
+        #theme-switch {
+            cursor: pointer; padding: 8px 12px; border-radius: 20px;
+            border: 1px solid #555; background-color: #333; color: #f1f1f1;
+            font-size: 0.9em; transition: all 0.3s ease;
+        }
+        #theme-switch:hover { background-color: #555; }
+
+        /* === LIGHT MODE === */
+        body.light-mode { background-color: #f5f7fa; color: #333; }
+        body.light-mode .slide { background-color: #fff; border-color: #d1d9e6; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        /* Azul vibrante para modo claro (#0288d1) */
+        body.light-mode .slide h1 { color: #0288d1; border-color: #0288d1; }
+        body.light-mode .slide h2 { color: #0288d1; }
+        
+        body.light-mode .subtitle { color: #546e7a; }
+        body.light-mode .single-content p { color: #455a64; }
+        body.light-mode pre { background-color: #eceff1; border-color: #cfd8dc; color: #263238; }
+        body.light-mode code { color: #00695c; }
+        body.light-mode .comment { color: #90a4ae; }
+        body.light-mode .prop { color: #7b1fa2; }
+        body.light-mode .val { color: #2e7d32; }
+        body.light-mode .sel { color: #d84315; } 
+        body.light-mode .unit { color: #e65100; }
+
+        body.light-mode .prev, body.light-mode .next { background-color: #e0e0e0; color: #333; }
+        body.light-mode .prev:hover, body.light-mode .next:hover { background-color: #bdbdbd; }
+        body.light-mode #theme-switch { background-color: #fff; color: #333; border-color: #ccc; }
+        body.light-mode #theme-switch:hover { background-color: #eee; }
+
+        @media screen and (max-width: 768px) {
+            body { padding: 15px; }
+            .slideshow-container { width: 100%; padding-bottom: 75px; }
+            .slide { height: auto; min-height: 75vh; padding: 20px 25px; }
+            .prev, .next { top: auto; bottom: 15px; width: 45px; height: 45px; }
+            .prev { left: 50%; transform: translateX(-110%); }
+            .next { left: 50%; transform: translateX(10%); right: auto; }
+            .slide h1 { font-size: 2.2em; }
+            .slide h2 { font-size: 1.8em; }
+            .single-content p { font-size: 1.1em; }
+            pre { font-size: 0.9em; }
+            .footer { font-size: 0.8em; right: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="theme-switch-wrapper">
+        <button id="theme-switch">Light Mode</button>
+    </div>
+
+    <div class="slideshow-container">
+        
+        <!-- =============================================================== -->
+        <!-- INICIO DE DIAPOSITIVAS -->
+        <!-- =============================================================== -->
+
+        <div class="slide fade">
+            <h1>Cheat Sheet de CSS</h1>
+            <div class="subtitle">Box Model</div>
+            <div class="footer">1 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>"Todo es una Caja"</h2>
+            <div class="single-content">
+                <p>No importa si es un círculo, un texto o una imagen. Para el navegador, todo elemento HTML es un rectángulo compuesto por capas.</p>
+                <pre><code><span class="comment">/* Las 4 capas del modelo de caja: */</span>
+
+1. <span class="val">Content</span> (El contenido real: texto, img)
+2. <span class="val">Padding</span> (Relleno interior)
+3. <span class="val">Border</span>  (El borde o límite)
+4. <span class="val">Margin</span>  (Espacio exterior)</code></pre>
+            </div>
+            <div class="footer">2 / 16</div>
+        </div>
+        
+        <div class="slide fade">
+            <h2>1. Width & Height</h2>
+            <div class="single-content">
+                <p>Definen el tamaño del <strong>área de contenido</strong> (content area). Por defecto, no incluyen ni el borde ni el padding.</p>
+                <pre><code><span class="sel">.caja</span> {
+  <span class="prop">width</span>: <span class="val">200<span class="unit">px</span></span>;
+  <span class="prop">height</span>: <span class="val">100<span class="unit">px</span></span>;
+  <span class="prop">background-color</span>: <span class="val">lightblue</span>;
+}
+
+<span class="comment">/* Si agregas padding, la caja visual 
+   crecerá más allá de estos 200px. */</span></code></pre>
+            </div>
+            <div class="footer">3 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>2. Padding (Relleno)</h2>
+            <div class="single-content">
+                <p>Es el espacio transparente entre el contenido y el borde. Toma el color de fondo del elemento.</p>
+                <pre><code><span class="sel">div</span> {
+  <span class="comment">/* Un valor: aplica a los 4 lados */</span>
+  <span class="prop">padding</span>: <span class="val">20<span class="unit">px</span></span>;
+
+  <span class="comment">/* Shorthand: Arriba | Derecha | Abajo | Izquierda */</span>
+  <span class="comment">/* Regla del reloj CLOCKWISE */</span>
+  <span class="prop">padding</span>: <span class="val">10<span class="unit">px</span> 20<span class="unit">px</span> 15<span class="unit">px</span> 5<span class="unit">px</span></span>;
+}</code></pre>
+            </div>
+            <div class="footer">4 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>3. Border (Borde)</h2>
+            <div class="single-content">
+                <p>Rodea el padding y el contenido. Requiere definir grosor, estilo y color.</p>
+                <pre><code><span class="sel">.tarjeta</span> {
+  <span class="comment">/* width | style | color */</span>
+  <span class="prop">border</span>: <span class="val">2<span class="unit">px</span> solid #4fc3f7</span>;
+  
+  <span class="comment">/* Bordes individuales */</span>
+  <span class="prop">border-bottom</span>: <span class="val">5<span class="unit">px</span> dashed red</span>;
+  
+  <span class="comment">/* Redondear esquinas (afecta visualmente al borde) */</span>
+  <span class="prop">border-radius</span>: <span class="val">10<span class="unit">px</span></span>;
+}</code></pre>
+            </div>
+            <div class="footer">5 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>4. Margin (Margen)</h2>
+            <div class="single-content">
+                <p>Es el espacio fuera del borde. Separa el elemento de sus vecinos. Es completamente invisible.</p>
+                <pre><code><span class="sel">h1</span> {
+  <span class="comment">/* Arriba y Abajo | Izquierda y Derecha */</span>
+  <span class="prop">margin</span>: <span class="val">20<span class="unit">px</span> 0</span>;
+}
+
+<span class="sel">.centro</span> {
+  <span class="prop">width</span>: <span class="val">50%</span>;
+  <span class="comment">/* Truco clásico para centrar horizontalmente */</span>
+  <span class="prop">margin</span>: <span class="val">0 auto</span>;
+}</code></pre>
+            </div>
+            <div class="footer">6 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>El Problema del Tamaño Real</h2>
+            <div class="single-content">
+                <p>Por defecto, si defines <code>width: 100px</code> y agregas <code>padding: 20px</code>, ¡la caja medirá 140px!</p>
+                <pre><code><span class="comment">/* box-sizing: content-box (Valor por defecto) */</span>
+
+<span class="sel">.caja-problematica</span> {
+  <span class="prop">width</span>: <span class="val">100<span class="unit">px</span></span>;
+  <span class="prop">padding</span>: <span class="val">20<span class="unit">px</span></span>; 
+  <span class="prop">border</span>: <span class="val">5<span class="unit">px</span> solid black</span>;
+}
+
+<span class="comment">/* Ancho Total = 100 + 20+20 + 5+5 = 150px */</span></code></pre>
+            </div>
+            <div class="footer">7 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>La Solución: Box Sizing</h2>
+            <div class="single-content">
+                <p><code>border-box</code> cambia el cálculo para que el padding y el borde queden <strong>dentro</strong> del ancho definido.</p>
+                <pre><code><span class="comment">/* Reset CSS Recomendado */</span>
+<span class="sel">*</span> {
+  <span class="prop">box-sizing</span>: <span class="val">border-box</span>;
+}
+
+<span class="sel">.caja-logica</span> {
+  <span class="prop">width</span>: <span class="val">100<span class="unit">px</span></span>;
+  <span class="prop">padding</span>: <span class="val">20<span class="unit">px</span></span>;
+  <span class="comment">/* El ancho total en pantalla SERÁ 100px.
+     El contenido se encoge automáticamente. */</span>
+}</code></pre>
+            </div>
+            <div class="footer">8 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Propiedad Outline</h2>
+            <div class="single-content">
+                <p>Dibuja una línea fuera del borde. A diferencia del borde, <strong>no ocupa espacio</strong> y puede superponerse a otros elementos.</p>
+                <pre><code><span class="sel">button:focus</span> {
+  <span class="comment">/* Muy importante para accesibilidad (teclado) */</span>
+  <span class="prop">outline</span>: <span class="val">3<span class="unit">px</span> solid orange</span>;
+  
+  <span class="comment">/* Separación entre el borde y el outline */</span>
+  <span class="prop">outline-offset</span>: <span class="val">5<span class="unit">px</span></span>;
+}</code></pre>
+            </div>
+            <div class="footer">9 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Box Shadow (Sombra)</h2>
+            <div class="single-content">
+                <p>Añade efectos de sombra a la caja. Sintaxis: X, Y, Blur, Spread, Color.</p>
+                <pre><code><span class="sel">.boton</span> {
+  <span class="comment">/* Offset-X | Offset-Y | Blur | Color */</span>
+  <span class="prop">box-shadow</span>: <span class="val">5<span class="unit">px</span> 5<span class="unit">px</span> 10<span class="unit">px</span> rgba(0,0,0,0.5)</span>;
+}
+
+<span class="comment">/* El Spread (4to valor) es opcional y expande la sombra */</span>
+<span class="prop">box-shadow</span>: <span class="val">0 0 10<span class="unit">px</span> 5<span class="unit">px</span> red</span>;</code></pre>
+            </div>
+            <div class="footer">10 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Box Shadow: Inset</h2>
+            <div class="single-content">
+                <p>La palabra clave <code>inset</code> cambia la sombra para que sea interior, creando un efecto de profundidad "hundido".</p>
+                <pre><code><span class="sel">.input-texto</span> {
+  <span class="prop">background-color</span>: <span class="val">#eee</span>;
+  
+  <span class="comment">/* Sombra interna */</span>
+  <span class="prop">box-shadow</span>: <span class="val">inset 0 2<span class="unit">px</span> 5<span class="unit">px</span> rgba(0,0,0,0.2)</span>;
+}</code></pre>
+            </div>
+            <div class="footer">11 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Colapso de Márgenes (Gotcha!)</h2>
+            <div class="single-content">
+                <p>Cuando dos márgenes verticales se tocan, no se suman. Se combinan y prevalece el mayor.</p>
+                <pre><code><span class="sel">h1</span> { <span class="prop">margin-bottom</span>: <span class="val">30<span class="unit">px</span></span>; }
+<span class="sel">p</span>  { <span class="prop">margin-top</span>: <span class="val">20<span class="unit">px</span></span>; }
+
+<span class="comment">/* El espacio real entre h1 y p NO será 50px.
+   Será 30px (el mayor de los dos). */</span>
+
+<span class="comment">/* Nota: Esto no pasa con márgenes horizontales. */</span></code></pre>
+            </div>
+            <div class="footer">12 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Display y el Modelo de Caja</h2>
+            <div class="single-content">
+                <p>El comportamiento de la caja depende de su <code>display</code>.</p>
+                <pre><code><span class="sel">span</span> {
+  <span class="prop">display</span>: <span class="val">inline</span>;
+  <span class="comment">/* Ignora width, height y márgenes verticales. */</span>
+}
+
+<span class="sel">div</span> {
+  <span class="prop">display</span>: <span class="val">block</span>;
+  <span class="comment">/* Ocupa todo el ancho disponible. Respeta todo. */</span>
+}
+
+<span class="sel">img</span> {
+  <span class="prop">display</span>: <span class="val">inline-block</span>;
+  <span class="comment">/* En línea, pero respeta width/height/margins. */</span>
+}</code></pre>
+            </div>
+            <div class="footer">13 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Debugueando Cajas</h2>
+            <div class="single-content">
+                <p>Un truco clásico para ver dónde están tus cajas si el diseño se rompe.</p>
+                <pre><code><span class="sel">*</span> {
+  <span class="prop">border</span>: <span class="val">1<span class="unit">px</span> solid red</span>; 
+  <span class="comment">/* O usa outline para no afectar el tamaño */</span>
+  <span class="prop">outline</span>: <span class="val">1<span class="unit">px</span> solid lime</span>;
+}
+
+<span class="comment">/* Consejo Pro: Usa el Inspector de Elementos 
+   del navegador (F12). */</span></code></pre>
+            </div>
+            <div class="footer">14 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Ejemplo Completo</h2>
+            <div class="single-content">
+                <p>Combinando todas las propiedades para una tarjeta de perfil.</p>
+                <pre><code><span class="sel">.card</span> {
+  <span class="prop">width</span>: <span class="val">300<span class="unit">px</span></span>;
+  <span class="prop">padding</span>: <span class="val">20<span class="unit">px</span></span>;
+  <span class="prop">margin</span>: <span class="val">0 auto</span>;
+  <span class="prop">border</span>: <span class="val">1<span class="unit">px</span> solid #ddd</span>;
+  <span class="prop">box-shadow</span>: <span class="val">0 4<span class="unit">px</span> 8<span class="unit">px</span> rgba(0,0,0,0.1)</span>;
+  <span class="prop">box-sizing</span>: <span class="val">border-box</span>;
+}</code></pre>
+            </div>
+            <div class="footer">15 / 16</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Resumen</h2>
+            <div class="single-content">
+                <p>El Modelo de Caja es la ley en CSS.</p>
+                <pre><code>1. Usa siempre 'box-sizing: border-box'.
+2. Recuerda: Content -> Padding -> Border -> Margin.
+3. Margin crea distancia entre elementos.
+4. Padding crea aire dentro del elemento.
+5. Outline no afecta el layout (bueno para focus).
+6. Cuidado con el colapso de márgenes verticales.</code></pre>
+            </div>
+            <div class="footer">16 / 16</div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- FIN DE DIAPOSITIVAS -->
+        <!-- =============================================================== -->
+
+        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+    </div>
+
+    <script>
+        let slideIndex = 1;
+        showSlides(slideIndex);
+
+        function plusSlides(n) {
+            showSlides(slideIndex += n);
+        }
+
+        function showSlides(n) {
+            let i;
+            let slides = document.getElementsByClassName("slide");
+            if (n > slides.length) { slideIndex = 1 } 
+            if (n < 1) { slideIndex = slides.length }
+            for (i = 0; i < slides.length; i++) {
+                slides[i].style.display = "none";
+            }
+            slides[slideIndex - 1].style.display = "flex";
+        }
+
+        const themeSwitch = document.getElementById('theme-switch');
+        const body = document.body;
+
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                themeSwitch.textContent = 'Dark Mode';
+            } else {
+                body.classList.remove('light-mode');
+                themeSwitch.textContent = 'Light Mode';
+            }
+        }
+
+        themeSwitch.addEventListener('click', () => {
+            let currentTheme = body.classList.contains('light-mode') ? 'light' : 'dark';
+            let newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark'; 
+            applyTheme(savedTheme);
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowLeft') { plusSlides(-1); } 
+            else if (event.key === 'ArrowRight') { plusSlides(1); }
+        });
+    </script>
+
+</body>
+</html>
